@@ -169,6 +169,8 @@ INVEN   14      noun
 ALL     20      noun
 LOT     20      noun
 EVERY   20      noun
+DOG	21	noun
+BIRD	22	noun
 ;
 TORCH	50	noun
 BAG	51	noun
@@ -194,6 +196,7 @@ GET     20      verb
 TAKE    20      verb
 G       20      verb
 DROP    21      verb
+PUT	21	verb
 REMOV   22      verb
 WEAR    23      verb
 R       24      verb
@@ -208,12 +211,13 @@ RS      28      verb
 RAMLO   29      verb
 RL      29      verb
 EXAMI   30      verb
+LOOK	30	verb
 SAY     31      verb
 ASK     31      verb
 TALK    31      verb
 SPEAK   31      verb
-PUT     32      verb
-LOOK    33      verb
+;PUT     32      verb
+;LOOK    33      verb
 OPEN    34      verb
 CLOSE   35      verb
 SHUT    35      verb
@@ -252,6 +256,7 @@ GENTL   6       adverb
 TO      2       preposition
 FROM    3       preposition
 IN      4       preposition
+INSIDE	4	preposition
 OUT     5       preposition
 THROU   6       preposition
 OVER    7       preposition
@@ -445,6 +450,37 @@ Tape or Disc?
 ;------------------------------------------------------------------------------
 /MTX    ;Message Texts
 /0
+The apple is crisp and green.
+/1
+It's a cheese and pickle sandwich.
+/2
+The ticket has "City Bus Company" printed on it.
+/3
+The bench is firmly screwed to a concrete base.
+/4
+The bus arrives. I hand the ticket to the driver who
+smiles and says "Sorry I'm late, hope you haven't been
+standing too long?".
+/5
+In the bag there is 
+/6
+The bird drops the ticket to peck at the sandwich.
+/7
+The bird snatches the ticket.
+/8
+The bird ignores me.
+/9
+A small bird is here.
+/10
+The bird has a ticket in its beak.
+/11
+A small bird settles on the ground.
+/12
+A small bird lands on the branch.
+/13
+The bird sees the dog and flutters away quickly.
+/14
+The bird flies away.
 ;------------------------------------------------------------------------------
 /OTX    ;Object Texts
 /0
@@ -502,11 +538,11 @@ through the gate in the railings.
 ;------------------------------------------------------------------------------
 /CON    	;Connections
 /0		;Start of game
-N	2
 /1		;In bag
-N	2
+U	2
 /2		;Bus stop
 W	4
+D	1
 /3		;By bench
 N	4
 W	6
@@ -539,7 +575,7 @@ D	7
 /1	2	3	Y _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	BAG	_
 /2	CARRIED	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	SANDW	_
 /3	CARRIED	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	APPLE	_
-/4	8	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	TICKET	_
+/4	_	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	TICKET	_
 /5	3	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	LEAD	_
 /6	WORN	3	_ Y  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	ANORA	_
 /7	CARRIED	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	TORCH   UNLIT
@@ -588,7 +624,7 @@ _       _       PROCESS 4               ; Do process 2 stuff here
 ;                ABSENT  0
 ;                MINUS   10      1
 
-;_	_	MINUS	5	1	; Used in Process 10
+_	_	MINUS	5	1	; Used in Process 7 (bird)
 
 _       _       PARSE   0               ; Get next LS from current buffer
                 PROCESS 2               ; Failed cos of invalid or timeout
@@ -633,14 +669,12 @@ _       _       SYSMESS 6               ; I didn't understand
 ; process tables 1 and 2 can now be anywhere or completely absent. Everything
 ; is implemented in the DAAD language itself.
 
-_	_	ABILITY	4	10
+_	_	LET	53	64	; Object lists printed as sentences.
 
-_	_	LET	53	64   ; object lists printed as sentences.
-
-_       _       AT      0
-                ANYKEY
-                GOTO    2
-                RESTART
+;_       _       AT      0
+;                ANYKEY
+;                GOTO    2
+;                RESTART
 
 ; This is better carried out thus ...
 
@@ -659,12 +693,52 @@ _       _       NEWLINE
 ;_       _       PRESENT 0               ;If the light source is present...
 ;                LISTOBJ                 ;List the objects
 
+_	_	SAME	12	38	; Bird at same location?
+		MESSAGE	9		; Tell player
+		ISAT	4	252	; Ticket in beak?
+		MESSAGE	10		; Tell player
+		NEWLINE
+
 ;------------------------------------------------------------------------------
 /PRO 4 ; Old process 2
 
+_	_	AT	2		; at bus stop
+		CARRIED	4		; with ticket
+		MESSAGE	4		; finished
+		NEWLINE
+		END
+
+_	_	PROCESS	7		; Bird
 
 ;------------------------------------------------------------------------------
 /PRO 5 ; Old response table - Command decoder
+
+EXAMI	APPLE	PRESENT	3		; Apple here?
+		MESSAGE	0		; "The apple is crisp and green."
+		NEWLINE
+		DONE
+
+EXAMI	SANDW	PRESENT	2		; The sandwich is here
+		MESSAGE	1		; Describe it
+		NEWLINE
+		DONE
+
+EXAMI	TICKET	PRESENT	4		; The ticket is here
+		MESSAGE	2
+		NEWLINE
+		DONE
+
+EXAMI	BENCH	AT	4		; The bench isn't an object
+		MESSAGE	3		; so check location
+		NEWLINE
+		DONE
+
+EXAMI	BAG	PREP	IN		; examine in bag
+		PRESENT	1
+		MES	5
+		LISTAT	1
+		NEWLINE
+		DONE
 
 I       _       SYSMESS 9
                 LISTAT  CARRIED         ; 254
@@ -673,11 +747,29 @@ I       _       SYSMESS 9
                 NEWLINE
                 DONE
 
+GET	TICKE	SAME	12	38	; Bird at the same location?
+		ISAT	4	252	; with ticket in beak?
+		CLEAR	5		; Force it to fly away
+		NOTDONE			; "I can't do that"
+
+GET	ALL	PREP	OUT		; Get all out of bag
+		NOUN2	BAG
+		DOALL	1
 GET     ALL     DOALL   HERE
+GET	_	PREP	OUT		; Get something out of the bag
+		NOUN2	BAG
+		PRESENT	1		; Bag here?
+		AUTOT	1
+		DONE
 GET     _       AUTOG
                 DONE
 
 DROP    ALL     DOALL   CARRIED
+DROP	_	PREP	IN		; Put something in the bag
+		NOUN2	BAG
+		PRESENT	1		; Bag here?
+		AUTOP	1		; Bag is "location" #1
+		DONE
 DROP    _       AUTOD
 
 REMOVE  ALL     DOALL   WORN
@@ -707,11 +799,11 @@ RAMSA   _       RAMSAVE
 RAMLO   _       RAMLOAD 255             ;Reload all flags
                 RESTART
 
-LOOK    _       RESTART
+;LOOK    _       RESTART
 
 ;------------------------------------------------------------------------------
 
-/PRO 6 ; Initialise the DAAD system
+/PRO 6	; Initialise the DAAD system
 
 _       _       WINDOW  1               ; Windows are random
 _       _       WINAT   0       0       ; set 14 0 for split screen with GFX
@@ -734,4 +826,52 @@ _       _       RESET                   ; Set objects to start location & Flag 1
                 LET     MaxCarr  4
                 SET     CPNoun
                 SET     CPAdject
-                GOTO    1               ; Main game
+;                GOTO    1               ; Main game
+
+_	_	LET	12	8	; Bird is on branch (locno. 8)
+                GOTO    2               ; Main game
+
+;------------------------------------------------------------------------------
+
+/PRO 7	; Bird
+
+_	_	COPYOF	4	11	; Copy loc'n of obj4(ticket) to flag11
+		SAME	11	12	; ticket at same loc'n as the bird.
+		ZERO	5		; Bird going to fly?
+		DESTROY	4		; Bird 'GETS' the ticket
+		SAME	12	38	; Bird at the same location as player?
+		MESSAGE	7		; "The bird snatches the ticket."
+
+_	_	EQ	12	8	; Bird on branch?
+		ZERO	5		; Time to fly?
+		LET	12	5	; Move bird to bandstand
+		LET	5	3	; Three phrases 'till move
+		AT	8		; Player here as well?
+		MESSAGE	14		; Tell them bird has flown
+		NEWLINE
+
+_	_	EQ	12	5	; Bird on bandstand?
+		ZERO	5		; Time to fly?
+		LET	12	8	; Move to branch
+		LET	5	3	; Three phrases 'till move
+		AT	5		; Player here as well?
+		MESSAGE	14		; "The bird flies away."
+		NEWLINE
+
+_	_	EQ	5	3	; Bird just flown?
+		SAME	12	38	; Now at players location?
+		AT	5		; On bandstand?
+		MESSAGE	11		; Landed on ground
+		NEWLINE
+
+_	_	EQ	5	3	; Bird just flown?
+		SAME	12	38	; Now at players location?
+		AT	8		; On branch?
+		MESSAGE	12		; Landed on branch
+		NEWLINE
+
+_	_	EQ	5	3
+		SAME	12	38
+		ISAT	4	252	; Ticket not-created?
+		MESSAGE	10		; Has a ticket in beak
+		NEWLINE
