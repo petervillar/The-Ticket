@@ -171,6 +171,7 @@ LOT     20      noun
 EVERY   20      noun
 DOG	21	noun
 BIRD	22	noun
+HERE	37	noun
 ;
 TORCH	50	noun
 BAG	51	noun
@@ -218,19 +219,11 @@ TALK    31      verb
 SPEAK   31      verb
 ;PUT     32      verb
 ;LOOK    33      verb
-OPEN    34      verb
-CLOSE   35      verb
-SHUT    35      verb
-SEARC	36	verb
-LIGHT	37	verb
-EXTIN	38	verb
-POKE	39	verb
-INSER	39	verb
-HOLD	39	verb
-READ	40	verb
-RIDE	41	verb
-MOUNT	41	verb
-ABOUT	42	verb
+TIE	34	verb
+UNTIE	35	verb
+SIT	36	verb
+STAY	36	verb
+COME	37	verb
 ;                               Adjectives
 SMALL   2       adjective
 BIG     3       adjective
@@ -481,6 +474,28 @@ A small bird lands on the branch.
 The bird sees the dog and flutters away quickly.
 /14
 The bird flies away.
+/15
+The _ falls to the ground at the foot of the tree.
+/16
+The dog's bright eyes stare at me with mindless love.
+/17
+A dog is here.
+/18
+The dog follows me wagging his tail.
+/19
+A lead trails behind the dog.
+/20
+The dog is tied to the bench by a lead.
+/21
+Trustingly the dog lets me put the lead around its neck.
+/22
+I've tied the lead to the bench.
+/23
+Who should I say it to?
+/24
+The dog is sitting quietly.
+/25
+I've untied the dog from the bench.
 ;------------------------------------------------------------------------------
 /OTX    ;Object Texts
 /0
@@ -693,6 +708,19 @@ _       _       NEWLINE
 ;_       _       PRESENT 0               ;If the light source is present...
 ;                LISTOBJ                 ;List the objects
 
+_	_	SAME	13	38	; Dog at same location?
+		MESSAGE	17		; Tell the player
+		EQ	14	1	; With lead?
+		MESSAGE	19		; Yes so tell player
+
+_	_	SAME	13	38
+		EQ	14	2	; Dog tied to bench?
+		MESSAGE	20
+
+_	_	SAME	13	38
+		GT	14	2	; 255 is greater than 2 so
+		MESSAGE	24		; tell player dog is sitting
+
 _	_	SAME	12	38	; Bird at same location?
 		MESSAGE	9		; Tell player
 		ISAT	4	252	; Ticket in beak?
@@ -707,6 +735,8 @@ _	_	AT	2		; at bus stop
 		MESSAGE	4		; finished
 		NEWLINE
 		END
+
+_	_	PROCESS	8		; Dog
 
 _	_	PROCESS	7		; Bird
 
@@ -829,11 +859,12 @@ _       _       RESET                   ; Set objects to start location & Flag 1
 ;                GOTO    1               ; Main game
 
 _	_	LET	12	8	; Bird is on branch (locno. 8)
+_	_	LET	13	2	; Dog is at the bus stop (locno. 2)
                 GOTO    2               ; Main game
 
 ;------------------------------------------------------------------------------
 
-/PRO 7	; Bird
+/PRO 7					; Bird
 
 _	_	COPYOF	4	11	; Copy loc'n of obj4(ticket) to flag11
 		SAME	11	12	; ticket at same loc'n as the bird.
@@ -874,4 +905,46 @@ _	_	EQ	5	3
 		SAME	12	38
 		ISAT	4	252	; Ticket not-created?
 		MESSAGE	10		; Has a ticket in beak
+		NEWLINE
+
+;------------------------------------------------------------------------------
+
+/PRO 8					; Dog
+
+_	_	NOTSAME	13	38	; Dog not where player is?
+		LT	14	2	; Still able to move?
+		NOTAT	8		; Player isn't up the tree?
+		COPYFF	38	13	; Move dog to players locno.
+		MESSAGE	18		; Tell them its followed...
+		NEWLINE
+
+
+
+;------------------------------------------------------------------------------
+
+/PRO 9					; Speak to dog
+
+_	_	PARSE			; Convert string to LS
+		MESSAGE	16		; Not valid phrase so
+		DONE			; dog does not understand
+
+SIT	_	ZERO	14		; Dog not partially tied up
+		SET	14		; Now sitting quietly
+		MESSAGE	24		; Tell player (always at same
+		DONE			; place as dog) Then DONE
+		NEWLINE
+
+COME	_	EQ	14	255	; Dog must be sitting
+		CLEAR	14		; Now normal
+		MESSAGE	18		; Dog follows
+		NEWLINE
+		DONE
+
+_	HERE	EQ	14	255	; Dog must be sitting
+		CLEAR	14		; Now normal
+		MESSAGE	18		; Dog follows
+		NEWLINE
+		DONE
+
+_	_	MESSAGE	16		; Anything else.
 		NEWLINE
