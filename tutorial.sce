@@ -710,16 +710,20 @@ _       _       NEWLINE
 
 _	_	SAME	13	38	; Dog at same location?
 		MESSAGE	17		; Tell the player
+		NEWLINE
 		EQ	14	1	; With lead?
 		MESSAGE	19		; Yes so tell player
+		NEWLINE
 
 _	_	SAME	13	38
 		EQ	14	2	; Dog tied to bench?
 		MESSAGE	20
+		NEWLINE
 
 _	_	SAME	13	38
 		GT	14	2	; 255 is greater than 2 so
 		MESSAGE	24		; tell player dog is sitting
+		NEWLINE
 
 _	_	SAME	12	38	; Bird at same location?
 		MESSAGE	9		; Tell player
@@ -768,6 +772,17 @@ EXAMI	BAG	PREP	IN		; examine in bag
 		MES	5
 		LISTAT	1
 		NEWLINE
+		DONE
+
+SAY	DOG	SAME	13	38	; It's here
+		PROCESS	9		; Someone else to do the work
+		DONE
+
+SAY	BIRD	SAME	12	38	; Bird here
+		MESSAGE	8
+		DONE
+
+SAY	_	MESSAGE	23		; Who?
 		DONE
 
 I       _       SYSMESS 9
@@ -907,6 +922,13 @@ _	_	EQ	5	3
 		MESSAGE	10		; Has a ticket in beak
 		NEWLINE
 
+_	_	SAME	12	13	; Bird and dog at the same location
+		LET	12	8	; Only ever on bandstand so
+		LET	5	3	; move to branch, three phrases
+		AT	5		; Player on bandstand?
+		MESSAGE	13		; tell them bird is gone..
+		NEWLINE
+
 ;------------------------------------------------------------------------------
 
 /PRO 8					; Dog
@@ -918,21 +940,19 @@ _	_	NOTSAME	13	38	; Dog not where player is?
 		MESSAGE	18		; Tell them its followed...
 		NEWLINE
 
-
-
 ;------------------------------------------------------------------------------
 
 /PRO 9					; Speak to dog
 
-_	_	PARSE			; Convert string to LS
+_	_	PARSE	1		; Convert string to LS
 		MESSAGE	16		; Not valid phrase so
 		DONE			; dog does not understand
 
 SIT	_	ZERO	14		; Dog not partially tied up
 		SET	14		; Now sitting quietly
 		MESSAGE	24		; Tell player (always at same
-		DONE			; place as dog) Then DONE
 		NEWLINE
+		DONE			; place as dog) Then DONE
 
 COME	_	EQ	14	255	; Dog must be sitting
 		CLEAR	14		; Now normal
