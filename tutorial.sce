@@ -785,6 +785,28 @@ SAY	BIRD	SAME	12	38	; Bird here
 SAY	_	MESSAGE	23		; Who?
 		DONE
 
+TIE	DOG	LET	34	55	; Convert DOG to LEAD
+TIE	LEAD	PREP	TO
+		NOUN2	BENCH
+		AT	4		; Where bench is
+		SAME	13	38	; dog is here
+		EQ	14	1	; with lead on
+		PLUS	14	1	; now tied to bench
+		MESSAGE	22		; tell player about it
+		NEWLINE
+		DONE
+TIE	_	NOTDONE			; Ensure an I can't
+
+UNTIE	DOG	LET	34	55	; Convert DOG to LEAD
+UNTIE	LEAD	AT	4		; Where bench is
+		EQ	14	2	; dog tied to it
+		CLEAR	14		; Now free
+		MESSAGE	25		; Tell player
+		NEWLINE
+		CREATE	5		; Recreate lead
+		GET	5		; Try and get it
+		DONE
+UNTIE	_	NOTDONE			; Ensure an I can't
 I       _       SYSMESS 9
                 LISTAT  CARRIED         ; 254
                 SYSMESS 10
@@ -810,10 +832,27 @@ GET     _       AUTOG
                 DONE
 
 DROP    ALL     DOALL   CARRIED
+DROP	LEAD	PREP	ON		; Ensure not just a DROP LEAD
+		NOUN2	DOG
+		CARRIED	5		; Player has the lead
+		SAME	13	38	; is at the same location as the dog
+		LET	14	1	; Dog now has lead on
+		DESTROY	5		; So player hasn't
+		MESSAGE	21		; Tell them so.
+		NEWLINE
+		DONE
 DROP	_	PREP	IN		; Put something in the bag
 		NOUN2	BAG
 		PRESENT	1		; Bag here?
 		AUTOP	1		; Bag is "location" #1
+		DONE
+DROP	_	AT	8		; Player on branch?
+		WHATO			; I say old boy!
+		LT	51	255	; Valid object?
+		EQ	54	254	; Object carried?
+		MESSAGE	15		; Its now bottom of tree.
+		NEWLINE
+		PUTO	7		; Put it there
 		DONE
 DROP    _       AUTOD
 
@@ -966,5 +1005,5 @@ _	HERE	EQ	14	255	; Dog must be sitting
 		NEWLINE
 		DONE
 
-_	_	MESSAGE	16		; Anything else.
+_	_	MESSAGE	16		; Anything else ("The dog's bright eyes ...")
 		NEWLINE
