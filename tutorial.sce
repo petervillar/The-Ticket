@@ -211,6 +211,7 @@ RAMSA   28      verb
 RS      28      verb
 RAMLO   29      verb
 RL      29      verb
+X	30      verb
 EXAMI   30      verb
 LOOK	30	verb
 SAY     31      verb
@@ -224,6 +225,8 @@ UNTIE	35	verb
 SIT	36	verb
 STAY	36	verb
 COME	37	verb
+TURN	38	verb
+CLIMB	39	verb
 ;                               Adjectives
 SMALL   2       adjective
 BIG     3       adjective
@@ -481,7 +484,7 @@ The dog's bright eyes stare at me with mindless love.
 /17
 A dog is here.
 /18
-The dog follows me wagging his tail.
+The dog follows me wagging its tail.
 /19
 A lead trails behind the dog.
 /20
@@ -496,6 +499,10 @@ Who should I say it to?
 The dog is sitting quietly.
 /25
 I've untied the dog from the bench.
+/26
+I see nothing special about the _.
+/27
+I wouldn't tie the dog there.
 ;------------------------------------------------------------------------------
 /OTX    ;Object Texts
 /0
@@ -550,6 +557,8 @@ The path curves South and East here beside a large tree.
 I am sitting on a branch in a broad leaved tree, the park is
 spread out before me, to the East I can see the bus stop
 through the gate in the railings.
+/9
+Inside the bandstand there are only stacked rows of folded-up wooden chairs.
 ;------------------------------------------------------------------------------
 /CON    	;Connections
 /0		;Start of game
@@ -582,6 +591,7 @@ SE	3
 S	6
 /8		;Up the tree
 D	7
+/9		; Down the bandstand
 ;------------------------------------------------------------------------------
 /OBJ    ;Object Definitions
 ;obj  starts  weight    c w  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0    noun	adjective
@@ -740,12 +750,44 @@ _	_	AT	2		; at bus stop
 		NEWLINE
 		END
 
+_	_	COPYOF	2	11	; Sandwich
+		SAME	11	12	; at same location as bird?
+		ISAT	4	252	; Ticket in beak?
+		COPYFO	12	4	; Put ticket down
+		SAME	12	38	; Player here as well?
+		MESSAGE	6		; Tell them...
+		NEWLINE
+
 _	_	PROCESS	8		; Dog
 
 _	_	PROCESS	7		; Bird
 
 ;------------------------------------------------------------------------------
 /PRO 5 ; Old response table - Command decoder
+
+TURN	TORCH	PREP	ON
+		CARRIED	7
+		SWAP	7	0
+		OK
+
+TURN	TORCH	PREP	OFF
+		CARRIED	0
+		SWAP	7	0
+		OK
+
+DOWN	_	AT	5		; Player on bandstand?
+		SET	0		; Flag 0=255=Dark!
+		GOTO	9		; New location
+		RESTART
+
+UP	_	AT	9		; Player inside bandstand?
+		CLEAR	0		; Light!
+		GOTO	5
+		RESTART
+
+CLIMB	_	AT	7		; By the tree
+		GOTO	8
+		RESTART
 
 EXAMI	APPLE	PRESENT	3		; Apple here?
 		MESSAGE	0		; "The apple is crisp and green."
@@ -774,6 +816,11 @@ EXAMI	BAG	PREP	IN		; examine in bag
 		NEWLINE
 		DONE
 
+EXAMI	_	WHATO			; I see nothing special about ...
+		MESSAGE	26		; I see nothing special about ...
+		NEWLINE
+		DONE
+
 SAY	DOG	SAME	13	38	; It's here
 		PROCESS	9		; Someone else to do the work
 		DONE
@@ -795,7 +842,16 @@ TIE	LEAD	PREP	TO
 		MESSAGE	22		; tell player about it
 		NEWLINE
 		DONE
-TIE	_	NOTDONE			; Ensure an I can't
+TIE	LEAD	PREP	TO		; Where to?
+		NOUN2	BENCH
+		AT	4
+		EQ	14	0	; roaming without a lead
+		NOTDONE
+TIE	LEAD	PREP	TO
+		MESSAGE	27		; Not a good idea anyway..
+		NEWLINE
+		DONE
+TIE	_	NOTDONE			; Ensure I can't
 
 UNTIE	DOG	LET	34	55	; Convert DOG to LEAD
 UNTIE	LEAD	AT	4		; Where bench is
@@ -807,6 +863,7 @@ UNTIE	LEAD	AT	4		; Where bench is
 		GET	5		; Try and get it
 		DONE
 UNTIE	_	NOTDONE			; Ensure an I can't
+
 I       _       SYSMESS 9
                 LISTAT  CARRIED         ; 254
                 SYSMESS 10
@@ -818,6 +875,12 @@ GET	TICKE	SAME	12	38	; Bird at the same location?
 		ISAT	4	252	; with ticket in beak?
 		CLEAR	5		; Force it to fly away
 		NOTDONE			; "I can't do that"
+
+GET	SANDW	SAME	12	38
+		ISAT	2	255	; Sandwich is here
+		CLEAR	5
+		GET	2
+		DONE
 
 GET	ALL	PREP	OUT		; Get all out of bag
 		NOUN2	BAG
@@ -846,6 +909,10 @@ DROP	_	PREP	IN		; Put something in the bag
 		PRESENT	1		; Bag here?
 		AUTOP	1		; Bag is "location" #1
 		DONE
+DROP	_	PREP	IN
+		NOUN2	BAG
+		ABSENT	1
+		NOTDONE
 DROP	_	AT	8		; Player on branch?
 		WHATO			; I say old boy!
 		LT	51	255	; Valid object?
@@ -903,17 +970,16 @@ _       _       NOTEQ   255     GFlags
 
 _       _       PLUS    255     1
                 LT      255     255     ; Will be set at end to indicate init
-                SKIP    -1              ; has been done once
+                SKIP    -2              ; has been done once
+
+_	_	LET	12	8	; Bird is on branch (locno. 8)
+_	_	LET	13	2	; Dog is at the bus stop (locno. 2)
 
 _       _       RESET                   ; Set objects to start location & Flag 1
                 LET     Strength 10
                 LET     MaxCarr  4
                 SET     CPNoun
                 SET     CPAdject
-;                GOTO    1               ; Main game
-
-_	_	LET	12	8	; Bird is on branch (locno. 8)
-_	_	LET	13	2	; Dog is at the bus stop (locno. 2)
                 GOTO    2               ; Main game
 
 ;------------------------------------------------------------------------------
