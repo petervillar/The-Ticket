@@ -214,6 +214,8 @@ UNTIE	35	verb
 SIT	36	verb
 STAY	36	verb
 COME	37	verb
+TURN	38	verb
+CLIMB	39	verb
 ;                               Adjectives
 SMALL   2       adjective
 BIG     3       adjective
@@ -294,7 +296,7 @@ Are you sure?
 Would you like another go? 
 /14 ;*Spare
 /15
-OK.
+Done.
 
 /16
 Press any key to continue.
@@ -513,7 +515,7 @@ I am on a gravel path running east to west, by a park bench, to the south is a
 grassy area while to the north I can see a bandstand.
 /5
 I am standing on the bandstand which appears to be made of orname cast iron
-painted white. To the south is a path.
+painted white. To the south is a path. Below the bandstand is a cellar.
 /6
 The sun glitters on the surface of the ornamental pond, whose watters ripple
 in the gentle breeze. A path runs north towards a large tree, while to the
@@ -523,6 +525,8 @@ The path curves south and east here beside a large tree.
 /8
 I am sitting on a branch in a broad leaved tree, the park is spread out before me,
 to the east I can see the bus stop through the gate in the railings..
+/9
+I'm in a dark and wet cellar below the bandstand.
 ;------------------------------------------------------------------------------
 /CON    ;Connections
 /0
@@ -555,18 +559,19 @@ SE	3
 S	6
 /8
 D	7
+/9
 ;------------------------------------------------------------------------------
 /OBJ    ;Object Definitions
 ;obj  starts  weight    c w  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0    noun   adjective
 ;num    at
-/0      254	1       _ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _    TORCH	LIT
+/0      252	1       _ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _    TORCH	LIT
 /1	2	3	Y _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	BAG	_
 /2	254	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	SANDW	_
 /3	254	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	APPLE	_
 /4	252	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	TICKE	_
-/5	3	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	LEAD	_
+/5	9	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	LEAD	_
 /6	253	3	_ Y  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	ANORA	_
-/7	252	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	TORCH	UNLIT
+/7	1	1	_ _  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _	TORCH	UNLIT
 ;------------------------------------------------------------------------------
 /PRO 0       ;Main Location Loop
 
@@ -677,6 +682,7 @@ _	_	NOTZERO	0
 ; is the dog 'ere?
 
 _	_	SAME	13	38
+		NEWLINE
 		MESSAGE	17
 		EQ	14	1
 		MESSAGE	19
@@ -693,6 +699,7 @@ _	_	SAME	13	38
 ; is the bird there?
 
 _	_	SAME	12	38
+		NEWLINE
 		MESSAGE	9
 		ISAT	4	252
 		MESSAGE 10
@@ -847,6 +854,32 @@ WEAR    ALL     DOALL   CARRIED
 WEAR    _       AUTOW
                 DONE
 
+DOWN	_	AT	5
+		SET	0
+		GOTO	9
+		RESTART
+
+UP	_	AT	9
+		CLEAR	0
+		GOTO	5
+		RESTART
+
+TURN	TORCH	PREP	ON
+		CARRIED	7
+		SWAP	7	0
+		SYSMESS	15
+		DONE
+
+TURN	TORCH	PREP	OFF
+		CARRIED	0
+		SWAP	0	7
+		SYSMESS	15
+		DONE
+
+CLIMB	TREE	AT	7
+		GOTO	8
+		RESTART
+
 R       _       RESTART
 
 QUIT    _       QUIT
@@ -931,11 +964,13 @@ _	_	EQ	12	5
 _	_	EQ	5	3	
 		SAME	12	38
 		AT	5
+		NEWLINE
 		MESSAGE	11
 
 _	_	EQ	5	3
 		SAME	12	38
 		AT	8
+		NEWLINE
 		MESSAGE	12
 
 ; has the bird the ticket?
@@ -951,6 +986,7 @@ _	_	SAME	12	13
 		LET	12	8
 		LET	5	3
 		AT	5
+		NEWLINE
 		MESSAGE	13
 
 ; bird drops ticket to peck at sandwich
@@ -972,6 +1008,7 @@ _	_	LT	14	2
 		NOTSAME	13	38
 		NOTAT	8
 		COPYFF	38	13
+		NEWLINE
 		MESSAGE	18
 
 ;------------------------------------------------------------------------------
